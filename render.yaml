@@ -1,0 +1,19 @@
+# Reference only: documents the dashboard settings of the live service.
+# The service was created via New > Web Service, not from this Blueprint.
+services:
+  - type: web
+    name: llm-application-deployment-project
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: MODEL_PROVIDER
+        value: dry
+      - key: LANGFUSE_TRACING_ENVIRONMENT
+        value: production
+      - key: LANGFUSE_RELEASE
+        value: "088db02"
+
