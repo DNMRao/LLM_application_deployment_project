@@ -184,6 +184,16 @@ class GenerationService:
         response: GenerateResponse | None = None,
     ) -> None:
         cache_hit = response.cache_hit if response else False
+        # Only NEW provider tokens are billed: zero on a cache hit or error.
+        new_usage = (
+            result.usage
+            if result and not cache_hit
+            else Usage(input_tokens=0, output_tokens=0)
+        )
+        cost_usd = (
+            new_usage.input_tokens * self.settings.input_price_per_mtok
+            + new_usage.output_tokens * self.settings.output_price_per_mtok
+        ) / 1_000_000
         trace = TraceRecord(
             trace_id=trace_id,
             timestamp=datetime.now(UTC).isoformat(),
@@ -196,10 +206,8 @@ class GenerationService:
             cache_hit=cache_hit,
             latency_ms=(time.perf_counter() - started) * 1000,
             stages=stages,
-            # Only NEW provider tokens are billed: zero on a cache hit or error.
-            usage=result.usage
-            if result and not cache_hit
-            else Usage(input_tokens=0, output_tokens=0),
+            usage=new_usage,
+            cost_usd=cost_usd,
             quality_score=response.quality_score if response else None,
             prompt_sha256=hashlib.sha256(request.prompt.encode()).hexdigest(),
             prompt_chars=len(request.prompt),

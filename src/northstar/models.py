@@ -82,6 +82,7 @@ class TraceRecord(BaseModel):
     latency_ms: float
     stages: list[Stage]
     usage: Usage  # NEW provider tokens only: zero on a cache hit
+    cost_usd: float = Field(default=0.0, ge=0)  # cost of those new tokens
     quality_score: float | None  # None on errors: failures are not quality samples
     prompt_sha256: str
     prompt_chars: int
