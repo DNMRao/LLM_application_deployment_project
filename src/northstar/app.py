@@ -5,6 +5,7 @@ Run locally from the repository root:
 """
 
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 
@@ -31,7 +32,16 @@ def build_service() -> GenerationService:
     )
 
 
-app = FastAPI(title="Northstar Support Assistant", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield  # the server runs here
+    # On shutdown: send any traces still queued (Langfuse batches in the background).
+    flush = getattr(app.state.service.trace_sink, "flush", None)
+    if callable(flush):
+        flush()
+
+
+app = FastAPI(title="Northstar Support Assistant", version="0.1.0", lifespan=lifespan)
 app.state.service = build_service()
 
 

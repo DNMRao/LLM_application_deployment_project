@@ -39,8 +39,13 @@ class Settings:
     trace_path: Path = ROOT / "reports" / "generated" / "traces.jsonl"
     environment: str = "development"
     release: str = "local"
+    # USD per 1 million tokens. 0 for the dry provider; set real prices for a live model.
+    input_price_per_mtok: float = 0.0
+    output_price_per_mtok: float = 0.0
 
     def __post_init__(self) -> None:
+        if self.input_price_per_mtok < 0 or self.output_price_per_mtok < 0:
+            raise ValueError("Token prices must be zero or positive")
         if self.provider not in SUPPORTED_PROVIDERS:
             raise ValueError(
                 f"Unsupported MODEL_PROVIDER={self.provider!r}; "
@@ -77,4 +82,6 @@ def load_settings() -> Settings:
         ),
         environment=os.getenv("LANGFUSE_TRACING_ENVIRONMENT", "development"),
         release=os.getenv("LANGFUSE_RELEASE", "local"),
+        input_price_per_mtok=float(os.getenv("INPUT_PRICE_PER_MTOK", "0")),
+        output_price_per_mtok=float(os.getenv("OUTPUT_PRICE_PER_MTOK", "0")),
     )
